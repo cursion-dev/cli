@@ -16,7 +16,8 @@ env_file = Path(str(Path.home()) + '/cursion/.env')
 load_dotenv(dotenv_path=env_file)
 
 API_KEY = f'Token {os.getenv('API_KEY')}'
-API_ROOT = f'{os.getenv('API_ROOT') if os.getenv('API_ROOT') is not None else 'https://api.cursion.dev'}'
+API_ROOT = f'{os.getenv('API_ROOT') if os.getenv('API_ROOT') else 'https://api.cursion.dev'}'
+CLIENT_ROOT = f'{os.getenv('CLIENT_ROOT') if os.getenv('CLIENT_ROOT') else 'https://app.cursion.dev'}'
 
 
 
@@ -24,7 +25,11 @@ API_ROOT = f'{os.getenv('API_ROOT') if os.getenv('API_ROOT') is not None else 'h
 
 
 @app.command()
-def config(api_key: str, api_root: str='https://api.cursion.dev') -> None:
+def setup(
+        api_key: str=None, 
+        api_root: str='https://api.cursion.dev' ,
+        client_root: str='https://app.cursion.dev',
+    ) -> None:
 
     """ 
     Setup and configure the Cursion CLI for initial use 
@@ -37,10 +42,42 @@ def config(api_key: str, api_root: str='https://api.cursion.dev') -> None:
     # creating new $HOME/cursion dir
     os.mkdir(env_dir)
 
+    # ask for api_key
+    if not api_key:
+        api_key = typer.prompt(
+            text='  Enter your Cursion API token', 
+            hide_input=True
+        )
+    
+        # ask for API url change request
+        change_api_root = typer.confirm(
+            text='  Would you like to change the API ROOT url?', 
+        )
+        if change_api_root: 
+            api_root = typer.prompt(
+                text='  Enter a new API ROOT', 
+                default=api_root
+            )
+        
+        # ask for CLIENT url change request
+        change_client_root = typer.confirm(
+            text='  Would you like to change the CLIENT ROOT url?', 
+        )
+        if change_client_root: 
+            client_root = typer.prompt(
+                text='  Enter a new CLIENT ROOT', 
+                default=client_root
+            )
+
+    # clean urls
+    api_root = api_root.rstrip('/')
+    client_root = client_root.rstrip('/')
+
     # adding new configs tp .env
     with open(env_file, "w") as f:
         f.write(f'API_KEY={api_key}\n')
         f.write(f'API_ROOT={api_root}\n')
+        f.write(f'CLIENT_ROOT={client_root}\n')
     
     # print response
     rprint(
@@ -55,7 +92,7 @@ def config(api_key: str, api_root: str='https://api.cursion.dev') -> None:
 
 def check_key_and_root():
     success = True
-    if len(os.getenv('API_KEY')) <= 0:
+    if len(os.getenv('API_KEY')) == 0:
         success = False
         rprint(
             '[red bold]' +
@@ -71,7 +108,7 @@ def check_key_and_root():
             ' api_key exists'
         )
 
-    if len(os.getenv('API_ROOT')) <= 0:
+    if len(os.getenv('API_ROOT')) == 0:
         success = False
         rprint(
             '[red bold]' +
@@ -85,6 +122,22 @@ def check_key_and_root():
             u'\u2714' +
             '[/green bold]' +
             ' api_root exists'
+        )
+    
+    if len(os.getenv('CLIENT_ROOT')) == 0:
+        success = False
+        rprint(
+            '[red bold]' +
+            u'\u2718' +
+            '[/red bold]' +
+            ' client_root exists'
+        )
+    else:
+        rprint(
+            '[green bold]' +
+            u'\u2714' +
+            '[/green bold]' +
+            ' client_root exists'
         )
     
     return success
@@ -127,8 +180,9 @@ def check():
             '[/green bold]'+
             f" All checks passed - Cursion is confgured correctly\n"
         )
-        rprint(f" API_KEY  : Token •••••••••••••••••••••••••••")
-        rprint(f" API_ROOT : {API_ROOT}\n\n")
+        rprint(f" API_KEY     : Token •••••••••••••••••••••••••••")
+        rprint(f" API_ROOT    : {API_ROOT}")
+        rprint(f" CLIENT_ROOT : {CLIENT_ROOT}\n\n")
 
     if not success:
         rprint(
@@ -138,11 +192,9 @@ def check():
             f" Some Checks Failed!"
         )
         rprint(
-            'To fix, please run: \n' +
-            ' cursion config <api_key>'+ 
-            ' --api-root=<private_api_root>\n'
+            ' To fix, please run: ' +
+            '[blue bold]`cursion setup`[/blue bold] and follow the prompts'
         )
-
 
 
 
@@ -163,7 +215,12 @@ def print_formated_response(response: dict, verbose: bool=True) -> None:
 
 
 @app.command()
-def add_site(site_url: str, v: bool=True, api_key: str=None):
+def add_site(
+        site_url: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Add a `Site` object to your Cursion account
@@ -174,6 +231,7 @@ def add_site(site_url: str, v: bool=True, api_key: str=None):
         site_url=site_url, 
         page_urls=None,
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -186,7 +244,12 @@ def add_site(site_url: str, v: bool=True, api_key: str=None):
     
 
 @app.command()
-def get_sites(site_id: str=None, v: bool=True, api_key: str=None):
+def get_sites(
+        site_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Get one or more `Site` objects associated
@@ -196,7 +259,8 @@ def get_sites(site_id: str=None, v: bool=True, api_key: str=None):
     # sending request
     resp = api_get_sites(
         site_id=site_id,
-        api_key=api_key, 
+        api_key=api_key,
+        api_root=api_root, 
     )
 
     # printing output
@@ -209,7 +273,12 @@ def get_sites(site_id: str=None, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def crawl_site(site_id: str, v: bool=True, api_key: str=None):
+def crawl_site(
+        site_id: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Crawl a specific `Site` for new `Page` objects
@@ -218,7 +287,8 @@ def crawl_site(site_id: str, v: bool=True, api_key: str=None):
     # sending request
     resp = api_crawl_site(
         site_id=site_id,
-        api_key=api_key, 
+        api_key=api_key,
+        api_root=api_root, 
     )
 
     # printing output
@@ -231,7 +301,12 @@ def crawl_site(site_id: str, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def delete_site(site_id: str, v: bool=True, api_key: str=None):
+def delete_site(
+        site_id: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Delete a specific `Site` object 
@@ -241,6 +316,7 @@ def delete_site(site_id: str, v: bool=True, api_key: str=None):
     resp = api_delete_site(
         site_id=site_id, 
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -253,7 +329,13 @@ def delete_site(site_id: str, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def add_page(site_id: str, page_url: str, v: bool=True, api_key: str=None):
+def add_page(
+        site_id: str, 
+        page_url: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Add a new `Page` object to a specific `Site` object
@@ -264,6 +346,7 @@ def add_page(site_id: str, page_url: str, v: bool=True, api_key: str=None):
         site_id=site_id, 
         page_url=page_url,
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -276,7 +359,13 @@ def add_page(site_id: str, page_url: str, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def get_pages(page_id: str=None, site_id: str=None, v: bool=True, api_key: str=None):
+def get_pages(
+        page_id: str=None, 
+        site_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Get one or more `Page` objects associated
@@ -288,6 +377,7 @@ def get_pages(page_id: str=None, site_id: str=None, v: bool=True, api_key: str=N
         page_id=page_id, 
         site_id=site_id, 
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -300,7 +390,12 @@ def get_pages(page_id: str=None, site_id: str=None, v: bool=True, api_key: str=N
 
 
 @app.command()
-def delete_page(page_id: str, v: bool=True, api_key: str=None):
+def delete_page(
+        page_id: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Delete a specific `Page` object 
@@ -309,7 +404,8 @@ def delete_page(page_id: str, v: bool=True, api_key: str=None):
     # sending request
     resp = api_delete_page(
         page_id=page_id,
-        api_key=api_key, 
+        api_key=api_key,
+        api_root=api_root, 
     )
 
     # printing output
@@ -322,7 +418,12 @@ def delete_page(page_id: str, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def scan_site(site_id: str, v: bool=True, api_key: str=None):
+def scan_site(
+        site_id: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Create new `Scan` objects for each `Page` associated
@@ -333,6 +434,7 @@ def scan_site(site_id: str, v: bool=True, api_key: str=None):
     resp = api_scan_site(
         site_id=site_id, 
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -345,7 +447,12 @@ def scan_site(site_id: str, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def scan_page(page_id: str, v: bool=True, api_key: str=None):
+def scan_page(
+        page_id: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Create a new `Scan` object for a specific `Page`
@@ -355,6 +462,7 @@ def scan_page(page_id: str, v: bool=True, api_key: str=None):
     resp = api_scan_page(
         page_id=page_id, 
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -367,7 +475,13 @@ def scan_page(page_id: str, v: bool=True, api_key: str=None):
 
 
 @app.command()
-def get_scans(scan_id: str=None, page_id: str=None, v: bool=True, api_key: str=None):
+def get_scans(
+        scan_id: str=None, 
+        page_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Get one or more `Scan` objects associated
@@ -379,6 +493,7 @@ def get_scans(scan_id: str=None, page_id: str=None, v: bool=True, api_key: str=N
         scan_id=scan_id, 
         page_id=page_id, 
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -391,7 +506,14 @@ def get_scans(scan_id: str=None, page_id: str=None, v: bool=True, api_key: str=N
 
 
 @app.command()
-def test_page(page_id: str, pre_scan_id: str, post_scan_id: str, v: bool=True, api_key: str=None):
+def test_page(
+        page_id: str, 
+        pre_scan_id: str, 
+        post_scan_id: str, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Create a new `Test` for a specific `Page`
@@ -403,6 +525,7 @@ def test_page(page_id: str, pre_scan_id: str, post_scan_id: str, v: bool=True, a
         pre_scan=pre_scan_id, 
         post_scan=post_scan_id, 
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -415,7 +538,13 @@ def test_page(page_id: str, pre_scan_id: str, post_scan_id: str, v: bool=True, a
 
 
 @app.command()
-def get_tests(page_id: str=None, test_id: str=None, v: bool=True, api_key: str=None):
+def get_tests(
+        page_id: str=None, 
+        test_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Get one or more `Test` objects associated
@@ -427,6 +556,7 @@ def get_tests(page_id: str=None, test_id: str=None, v: bool=True, api_key: str=N
         page_id=page_id, 
         test_id=test_id,
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -442,8 +572,10 @@ def get_tests(page_id: str=None, test_id: str=None, v: bool=True, api_key: str=N
 def test_site(
         site_id: str, 
         max_wait_time :int=120,
-        threshold: int=90,
-        api_key: str=None
+        threshold: int=95,
+        api_key: str=None,
+        api_root: str=None,
+        client_root: str=None
     ):
 
     """ 
@@ -457,6 +589,8 @@ def test_site(
         max_wait_time=max_wait_time,
         threshold=threshold,
         api_key=api_key,
+        api_root=api_root,
+        client_root=client_root,
     )
 
     if not resp:
@@ -468,7 +602,13 @@ def test_site(
 
 
 @app.command()
-def get_cases(case_id: str=None, site_id: str=None, v: bool=True, api_key: str=None):
+def get_cases(
+        case_id: str=None, 
+        site_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
     Get one or more `Cases` objects associated
@@ -480,6 +620,7 @@ def get_cases(case_id: str=None, site_id: str=None, v: bool=True, api_key: str=N
         site_id=site_id, 
         case_id=case_id,
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -493,18 +634,25 @@ def get_cases(case_id: str=None, site_id: str=None, v: bool=True, api_key: str=N
 
 
 @app.command()
-def get_testcases(testcase_id: str=None, site_id: str=None, v: bool=True, api_key: str=None):
+def get_caseruns(
+        caserun_id: str=None, 
+        site_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
 
     """ 
-    Get one or more `Testcases` objects associated
+    Get one or more `CaseRuns` objects associated
     with a specific `Site`
     """
 
     # sending request
-    resp = api_get_testcases(
+    resp = api_get_caseruns(
         site_id=site_id, 
-        testcase_id=testcase_id,
+        caserun_id=caserun_id,
         api_key=api_key,
+        api_root=api_root,
     )
 
     # printing output
@@ -522,29 +670,122 @@ def get_testcases(testcase_id: str=None, site_id: str=None, v: bool=True, api_ke
         "ignore_unknown_options": True
     }
 )
-def testcase_site(
+def run_case(
         site_id: str,
         case_id: str, 
         max_wait_time :int=120,
         api_key: str=None,
+        api_root: str=None,
+        client_root: str=None,
         updates: typer.Context=None
     ):
 
     """ 
-    Run a full `Testcase` of a specific `Site`
+    Run a `Case` for a specific `Site`
     """
 
     # sending request
-    resp = api_testcase_site(
+    resp = api_run_case(
         site_id=site_id, 
         case_id=case_id, 
         max_wait_time=max_wait_time,
         api_key=api_key,
+        api_root=api_root,
+        client_root=client_root,
         updates=updates.args
     )
 
     if not resp:
-        raise Exception('- Cursion Testcase Failed -')
+        raise Exception('- Cursion CaseRun Failed -')
+
+
+
+
+@app.command()
+def get_flows(
+        flow_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None
+    ):
+
+    """ 
+    Get one or more `Flow` objects
+    """
+
+    # sending request
+    resp = api_get_flows(
+        flow_id=flow_id,
+        api_key=api_key,
+        api_root=api_root,
+    )
+
+    # printing output
+    print_formated_response(
+        response=resp,
+        verbose=v
+    )
+
+
+
+
+@app.command()
+def get_flowruns(
+        flowrun_id: str=None, 
+        site_id: str=None, 
+        v: bool=True, 
+        api_key: str=None,
+        api_root: str=None,
+    ):
+
+    """ 
+    Get one or more `FlowRun` objects associated
+    with a specific `Site`
+    """
+
+    # sending request
+    resp = api_get_flowruns(
+        flowrun_id=flowrun_id,
+        site_id=site_id,
+        api_key=api_key,
+        api_root=api_root,
+    )
+
+    # printing output
+    print_formated_response(
+        response=resp,
+        verbose=v
+    )
+
+
+
+@app.command()
+def run_flow(
+        site_id: str,
+        flow_id: str, 
+        max_wait_time :int=240,
+        api_key: str=None,
+        api_root: str=None,
+        client_root: str=None
+    ):
+
+    """ 
+    Run a `Flow` for a specific `Site`
+    """
+
+    # sending request
+    resp = api_run_flow(
+        site_id=site_id, 
+        flow_id=flow_id, 
+        max_wait_time=max_wait_time,
+        api_key=api_key,
+        api_root=api_root,
+        client_root=client_root,
+    )
+
+    if not resp:
+        raise Exception('- Cursion FlowRun Failed -')
+
 
 
 

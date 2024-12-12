@@ -7,7 +7,7 @@ LABEL Author="Cursion" Support="hello@cursion.dev"
 RUN addgroup --system app && adduser --system app 
 
 # installing cursion & deps
-RUN python3 -m pip install cursion==0.0.3 typer requests rich python-dotenv
+RUN python3 -m pip install cursion==0.0.4 typer requests rich python-dotenv
 
 # setting user
 USER app

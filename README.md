@@ -18,7 +18,7 @@ pip install cursion
 
 ### Basic Setup
 ```shell
-cursion config <api_key>
+cursion setup
 cursion check
 ```
 
