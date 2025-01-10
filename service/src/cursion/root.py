@@ -19,7 +19,31 @@ API_KEY = f'Token {os.getenv('API_KEY')}'
 API_ROOT = f'{os.getenv('API_ROOT') if os.getenv('API_ROOT') else 'https://api.cursion.dev'}'
 CLIENT_ROOT = f'{os.getenv('CLIENT_ROOT') if os.getenv('CLIENT_ROOT') else 'https://app.cursion.dev'}'
 
+welcome = (
+    """ 
+    =======================================================
 
+                   .d8888b.     Y88b    
+                  d88P    88d     Y88b   
+                 888                Y88b  
+                 888                 Y88b 
+                 888                d88P  
+                  Y88b    88d     d88P   
+                    "Y8888P"    d88P
+
+          _____ _    _ _____   _____ _____ ____  _   _ 
+         / ____| |  | |  __ \ / ____|_   _/ __ \| \ | |
+        | |    | |  | | |__) | (___   | || |  | |  \| |
+        | |    | |  | |  _  / \___ \  | || |  | | . ` |
+        | |____| |__| | | \ \ ____) |_| || |__| | |\  |
+         \_____|\____/|_|  \_\_____/|_____\____/|_| \_|
+        
+    Welcome to the Cursion CLI!
+    © Grey Labs, LLC 2025
+
+    =======================================================
+    """
+)
 
 
 
@@ -34,6 +58,9 @@ def setup(
     """ 
     Setup and configure the Cursion CLI for initial use 
     """
+
+    # print welcome message
+    print(welcome)
 
     # deleting $HOME/cursion/.env if exists
     if env_dir.exists():
