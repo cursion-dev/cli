@@ -1,6 +1,6 @@
 # Cursion CLI (command line interface)
 
-![Static Badge](https://img.shields.io/badge/CLI-Available-mint)
+![Static Badge](https://img.shields.io/badge/CLI-Available-mint?style=for-the-badge)
 
 This is the CLI repo for the Cursion API, an error detection service designed to run front-end tests on web applications.
 
