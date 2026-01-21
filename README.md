@@ -4,7 +4,7 @@
 
 This is the CLI repo for the Cursion API, an error detection service designed to run front-end tests on web applications.
 
-Copyright © Grey Labs, LLC 2025
+Copyright © Grey Labs, LLC 2026
 
 ### Usage
 > Reference <a target="_blank" href="https://docs.cursion.dev/guides/cli.html">Cursion Docs</a> for usage instructions
