@@ -9,7 +9,7 @@ load_dotenv(dotenv_path=env_file)
 
 # import env vars
 CURSION_API_BASE_URL = f'{os.getenv('API_ROOT')}/v1/ops'
-CURSION_CLIENT_BASE_URL = os.getenv('CLIENT_ROOT')
+CURSION_CLIENT_ROOT_URL = os.getenv('CLIENT_ROOT')
 CURSION_API_TOKEN = f'Token {os.getenv('API_KEY')}'
 headers = {
    "content-type": "application/json",
@@ -1010,7 +1010,7 @@ def api_test_site(
     wait_for_completion(ids=test_ids, obj='test')
 
     # decide on client_uri
-    client_uri = client_root if client_root else CURSION_CLIENT_BASE_URL
+    client_uri = client_root if client_root else CURSION_CLIENT_ROOT_URL
 
     # checking scores
     success = True
@@ -1143,7 +1143,7 @@ def api_run_case(
     passed = True if caserun['status'] == 'passed' else False
 
     # decide on client_uri
-    client_uri = client_root if client_root else CURSION_CLIENT_BASE_URL
+    client_uri = client_root if client_root else CURSION_CLIENT_ROOT_URL
 
     failed = []
     i = 1
@@ -1249,7 +1249,7 @@ def api_run_flow(
     passed = True if flowrun['status'] == 'passed' else False
 
     # decide on client_uri
-    client_uri = client_root if client_root else CURSION_CLIENT_BASE_URL
+    client_uri = client_root if client_root else CURSION_CLIENT_ROOT_URL
 
     failed = []
     i = 1
